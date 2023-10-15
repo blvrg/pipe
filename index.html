@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PIPE</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+    * {font-family:'Roboto', sans-serif; background:black; color:white}
+    body {width:420px; margin:0 auto}
+    form {overflow-wrap:break-word}
+    li {margin:15px 0}
+    input {border:1px solid white; display:block; width:100%; margin-bottom:15px}
+    @media screen and (max-width: 900px) {
+      body {
+        width: 95%;
+      }
+    }
+  </style>
+  <script src="crypto-utils.1.5.11.js"></script>
+  <script src="tapscript.1.2.7.js"></script>
+  <script> const { Address, Script, Signer, Tap, Tx } = window.tapscript </script>
+</head>
+<body>
+<div id="file_upload" style="display: none;">
+  <form>
+    <h2>PIPE | Deploy</h2>
+    <hr/>
+    <label for="priv_key">Private Key (leave empty to generate new)</label>
+    <input type="password" id="priv_key" value="" placeholder="leave empty to generate new one or add an existing one"/>
+
+    <p>Open the browser console to retrieve your private key after clicking "Upload" at the bottom.</p>
+
+
+    <label for="network">Network</label>
+    <input type="text" id="network" value="main" placeholder="use 'main' for mainnet"/>
+
+
+    <label for="ticker">Ticker</label>
+    <input type="text" id="ticker" value="PIPE" placeholder="only letters, uppercase"/>
+
+
+    <label for="the_id">ID</label>
+    <input type="text" id="the_id" value="0" placeholder="the ticker id from 0 - 999999"/>
+
+
+    <label for="decimals">Decimals</label>
+    <input type="text" id="decimals" value="8" placeholder="decimal points from 0 - 8"/>
+
+
+    <label for="supply">Supply</label>
+    <input type="text" id="supply" value="21000000" placeholder="max. supply of token"/>
+
+
+    <label for="mint_limit">Mint Limit</label>
+    <input type="text" id="mint_limit" value="1000" placeholder="limit to mint per tx"/>
+
+
+    <label for="receiver">Receiver (beneficiary)</label>
+    <input type="text" id="receiver" value="" placeholder="taproot address to associate this deployment with"/>
+
+    <label for="receiver_sats">Receiver Sats</label>
+    <input type="text" id="receiver_sats" value="546" placeholder="sats for the beneficiary output"/>
+
+
+    <label for="tx_fee">TX Fee</label>
+    <input type="text" id="tx_fee" value="2000" placeholder="sats to pay the fee. must include the beneficiary sats."/>
+
+
+    <label for="enable_pipeart">Enable Pipe | Art</label>
+    <input type="checkbox" id="enable_pipeart" value="1"/>
+
+
+    <label for="to_beneficiary">Mint to receiver</label>
+    <input type="text" id="to_beneficiary" value="" placeholder="taproot receiver address"/>
+
+    <p>Will perform a one-time mint of the size of the set limit above (works only if Pipe | Art is enabled).</p>
+    <hr/>
+    <h2>PIPE | Art (optional)</h2>
+    <p>Use this to attach files, collection information and traits to your token deploy.</p>
+    <p>If you want to create a collection, make sure to use the same private key, as it is the collection identifier. For new collections create a new key.</p>
+    <p>Be aware that with pipe art, the funding address will change with every new item. Please be very careful and make sure your setup is correct as it will be very hard to recover funds from the funding address.</p>
+    <p>DO NOT CLOSE THIS WINDOW WHEN SENDING FUNDS</p>
+    <p>YOU WILL NEED TO GET THE RESULTING TX HEX FIRST</p>
+    <hr/>
+    <h2>Files</h2>
+    <label for="the_file">File upload</label>
+    <input
+            accept=".json,
+                              .json,
+                              .pdf,
+                              .asc,
+                              .binpb,
+                              .yml,
+                              .flac,
+                              .mp3,
+                              .wav,
+                              .apng,
+                              .avif,
+                              .gif,
+                              .jpg,
+                              .jpeg,
+                              .png,
+                              .svg,
+                              .webp,
+                              .gltf,
+                              .glb,
+                              .stl,
+                              .css,
+                              .html,
+                              .js,
+                              .md,
+                              .txt,
+                              .mp4,
+                              .webm
+                              " type="file" id="the_file">
+
+
+    <label for="the_reference">OR reference (url, ordinal, ipfs or arweave)</label>
+    <input type="text" id="the_reference" value=""/>
+
+
+    <p><strong>References Examples</strong>:</p>
+
+
+    <li>Url: https://ordinals.com/content/27b49082e2287abb2744cf6f0d2e60b46c0e5474fb4b81f05d31767c70bd09cbi0
+
+
+    <li>Ordinal: ord://27b49082e2287abb2744cf6f0d2e60b46c0e5474fb4b81f05d31767c70bd09cbi0
+
+
+    <li>IPFS: ipfs://QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/
+
+
+    <li>IPNS (allows reveals): ipns://k51qzi5uqu5dgy6fu9073kabgj2nuq3qyo4f2rcnn4380z6n8i4v2lvo8dln6l
+
+
+    <li>Arweave: ar://Ah2IBjWgsbeCXDHaIToUfQhf-calg1qdMJgD7Wnxz1c
+
+    <hr>
+
+    <h2>Collection Information</h2>
+
+    <label for="number">Number</label>
+    <input type="text" id="number" value="" placeholder="e.g. 0"/>
+
+
+
+
+    <label for="max_number">Maximum</label>
+    <input type="text" id="max_number" value="" placeholder="e.g. 9999"/>
+
+
+
+
+    <strong>Collection Notes</strong>
+
+
+
+
+    <p>Use Number 0 and maximum 0 if this is supposed to be a single item collection.
+
+
+    <p>Number must always be lower or equal to maximum and never be negative.
+
+
+    <p>Maximum is the total supply - 1 and should be the same across your collection.
+
+
+    <p>To increase maximum, set a higher value with your next mint. Decreasing maximum updates will be ignored by indexers.
+
+
+    <p>Make sure NOT to re-use the same number within the same collection. If a number already exists in a collection, it won't be indexed!
+
+    <hr/>
+
+    <h2>Traits (optional)</h2>
+
+    <textarea id="traits" style="width: 500px; height: 100px;"></textarea>
+
+    <p><strong>Traits Example</strong>:</p>
+
+    <ul>
+        <li>color: red</li>
+
+        <li>shape: square</li>
+
+        <li>1of1: yes</li>
+    </ul>
+
+    <label for="the_traits_reference">OR reference (url, ordinal, ipfs or arweave)</label>
+    <input type="text" id="the_traits_reference" value=""/>
+
+
+    <strong>Traits References Examples</strong>:
+
+    <ul>
+        <li>Url: https://ordinals.com/content/27b49082e2287abb2744cf6f0d2e60b46c0e5474fb4b81f05d31767c70bd09cbi0
+
+
+        <li>Ordinal: ord://27b49082e2287abb2744cf6f0d2e60b46c0e5474fb4b81f05d31767c70bd09cbi0</li>
+
+
+        <li>IPFS: ipfs://QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/</li>
+
+
+        <li>IPNS (allows trait updates): ipns://k51qzi5uqu5dgy6fu9073kabgj2nuq3qyo4f2rcnn4380z6n8i4v2lvo8dln6l</li>
+
+
+        <li>Arweave: ar://Ah2IBjWgsbeCXDHaIToUfQhf-calg1qdMJgD7Wnxz1c</li>
+    </ul>
+    <hr/>
+
+    <p>Prior to pushing the txhex, make sure your entries are all correct as these cannot be changed once it's on chain.</p>
+
+    <hr/>
+
+    <div id="sendto" style="display: none; color: red;"></div>
+
+    <input type="text" id="vout" style="display:none;width:20px;margin-top:15px;" value="" placeholder="vout 0 or 1"/>
+    <input type="text" id="tx" style="display:none;width:200px;margin-top:15px;" value="" placeholder="Enter TX Hash from funding"/>
+
+    <button style="margin-top: 15px;" id="do_upload" type="button">
+      Upload
+    </button>
+
+    <button style="margin-top: 15px;display:none;" id="create_tx" type="button" disabled="disabled">
+      Create RAW TX
+    </button>
+
+    <input style="margin-top: 15px;" type="reset" value="Reset"/>
+
+  </form>
+
+</div>
+
+<script>
+
+  // NOTE:
+  //
+  // Check the browser developer console to get your private key, raw tx and the commit address. The private key will be generated on every reload.
+  // Store your private key at a safe place and pass it as parameter to createKeyPair() to perform deploy, mint and transfer below using the same account.
+  //
+  // This script only works with taproot addresses (your beneficiary address _must_ start with "bc1p")!
+  // First setup your parameters, then reload the page. open the browser console and send the tx fee sats to the generated address (labelled as 'Send sats to address').
+  //
+  // Once confirmed, paste your resulting raw transaction here to trigger the actual deploy, mint or transfer transactions:
+  // https://mempool.space/tx/push
+  //
+  // Use one of the deploy, mint or transfer functions below by uncommenting what you need and comment what you don't need.
+  //
+  // Feel free to use, edit, distribute or whatever you want to do with this script. CC0 Licensed.
+
+  document.getElementById('file_upload').style.display = 'block';
+  document.getElementById('do_upload').onclick = async function()
+  {
+    const config_key = document.getElementById('priv_key').value.trim();
+
+    let pair = null;
+
+    if(config_key !== '')
+    {
+      pair = createKeyPair(config_key);
+    }
+    else
+    {
+      pair = createKeyPair();
+    }
+
+    if(document.getElementById('receiver').value.trim() === '')
+    {
+      alert('Please enter a receiver address. A receiver is also required for deployments.');
+      return;
+    }
+
+    let pipeart = document.getElementById('enable_pipeart').checked
+    let data = null;
+    let mimetype = null;
+    let reference = null;
+    let number = null;
+    let max_number = null;
+    let traits = null;
+    let traits_ref = null;
+    let to_beneficiary = null;
+
+    if(pipeart)
+    {
+      let files = document.getElementById('the_file').files;
+      reference = document.getElementById('the_reference').value;
+
+      if(files.length === 0 && reference.trim() === '')
+      {
+        alert('Please upload a file or set a link to a file');
+        return;
+      }
+
+      if(files.length === 0 && reference.trim() !== '')
+      {
+        if(!reference.trim().startsWith('http://') &&
+                !reference.trim().startsWith('https://') &&
+                !reference.trim().startsWith('ord://') &&
+                !reference.trim().startsWith('ipfs://') &&
+                !reference.trim().startsWith('ipns://') &&
+                !reference.trim().startsWith('ar://')
+        )
+        {
+          alert('Invalid file reference ' + reference.trim());
+          return;
+        }
+      }
+
+      if(files.length === 1)
+      {
+        data = await getAsByteArray(files[0]);
+        mimetype = files[0].type;
+
+        if (mimetype.includes("text/plain")) {
+
+          mimetype += ";charset=utf-8";
+        }
+
+        if (files[0].size >= 350000) {
+
+          alert('File too large. Max. 350kb');
+          return;
+        }
+      }
+
+      if(reference.trim() === '')
+      {
+        reference = null;
+      }
+      else
+      {
+        reference = reference.trim();
+      }
+
+      number = parseInt(document.getElementById('number').value);
+      max_number = parseInt(document.getElementById('max_number').value);
+
+      if(isNaN(number) || isNaN(max_number))
+      {
+        alert('Collection number must be greater or equal to 0 and lower or equal to max_number');
+        return;
+      }
+      else if(number < 0 || number > max_number)
+      {
+        alert('Collection number must be greater or equal to 0 and lower or equal to max_number');
+        return;
+      }
+
+      traits = document.getElementById('traits').value;
+      traits_ref = document.getElementById('the_traits_reference').value;
+
+      if(traits.trim() === '')
+      {
+        traits = null;
+      }
+
+      if(traits_ref.trim() === '')
+      {
+        traits_ref = null;
+      }
+      else
+      {
+        if(!traits_ref.trim().startsWith('http://') &&
+                !traits_ref.trim().startsWith('https://') &&
+                !traits_ref.trim().startsWith('ord://') &&
+                !traits_ref.trim().startsWith('ipfs://') &&
+                !traits_ref.trim().startsWith('ipns://') &&
+                !traits_ref.trim().startsWith('ar://')
+        )
+        {
+          alert('Invalid traits reference ' + traits_ref.trim());
+          return;
+        }
+      }
+
+      if(document.getElementById('to_beneficiary').value.trim() !== '')
+      {
+        to_beneficiary = document.getElementById('to_beneficiary').value.trim();
+      }
+    }
+
+    deploy(
+            document.getElementById('ticker').value.trim(),
+            parseInt(document.getElementById('the_id').value.trim()),
+            parseInt(document.getElementById('decimals').value.trim()),
+            document.getElementById('supply').value.trim(),
+            document.getElementById('mint_limit').value.trim(),
+            document.getElementById('receiver').value.trim(),
+            parseInt(document.getElementById('receiver_sats').value.trim()),
+            '',
+            0,
+            parseInt(document.getElementById('tx_fee').value.trim()),
+            document.getElementById('network').value.trim(),
+            pair.seckey,
+            pair.pubkey,
+            pipeart,
+            data,
+            mimetype,
+            reference,
+            number,
+            max_number,
+            traits,
+            traits_ref,
+            to_beneficiary
+    )
+  }
+
+  // uncomment to perform a mint tx
+  /*
+
+  let pair = createKeyPair();
+
+  mint(
+          'PIPE',               // TICKER
+          0,                    // ID
+          '1000',               // mint amount
+          'bc1pfanz9schc58rhaun0jnhtqa8zulpggaepzrafr9yel7j75cx6w8s5nxqnp', // beneficiary address (receiver)
+          546,                  // sats in beneficiary output
+          '2375a3e8ee1e170b2ca813b6a46a4beffef83b6da244d397b2f79a54d909ce1f', // tx id of utxo to spend from
+          0,                    // vout (switch to either 0 or 1 if you get an invalid schnorr error)
+          1_000,                // tx fee (must include sats for the beneficiary output)
+          'main',               // signet, testnet, main
+          pair.seckey,
+          pair.pubkey
+  )*/
+
+  // uncomment to perform a transfer tx
+  // this will only work if you use a private key from a wallet that owns tokens.
+  // in the function example, only one utxo is being used. this utxo should hold all the tokens and also the necessary amount of sats to pay fees (unlikely to have this at hand).
+  // it does not include a change output. so if you use this, please send the exact amount or better, rewrite it to include a change quadruple and another input for fees to be practical.
+  /*
+
+  let pair = createKeyPair();
+
+  transfer(
+          'PIPE',               // TICKER
+          0,                    // ID
+          '512.234',            // transfer amount
+          'bc1prc5ndjzzc397dzyv8pa2l88kr25926xy73m6gj0zcuec0zylyshp8m4w', // beneficiary address (receiver)
+          546,                  // sats in beneficiary output
+          '378a664beb86398f8bfb12749facf8e422ffcb1aad08bf5d0f1aeab8817fb3c2', // tx id of utxo to spend from
+          0,                    // vout (switch to either 0 or 1 if you get an invalid schnorr error)
+          5_000,                // tx fee (must include sats for the beneficiary output)
+          'main',               // signet, testnet, main
+          pair.seckey,
+          pair.pubkey
+  )*/
+
+  function createKeyPair(pk = '')
+  {
+    let privkey
+
+    if(pk !== '')
+    {
+      privkey = pk
+    }
+    else
+    {
+      privkey = bytesToHex(cryptoUtils.Noble.utils.randomPrivateKey())
+    }
+
+    console.log('your private key', privkey);
+
+    const KeyPair = cryptoUtils.KeyPair
+    const seckey = new KeyPair(privkey)
+    const pubkey = seckey.pub.rawX
+
+    return { seckey: seckey, pubkey : pubkey }
+  }
+
+  async function deploy(
+          SYMBOL, ID, DECIMALS, MAX, LIMIT, RECEIVER, RVALUE, TX, VOUT, PVALUE, network, seckey, pubkey,
+          attachment, attachment_data = null, attachment_mime = null, attachment_file_ref = null,
+          attachment_number = null, attachment_number_max = null, attachment_traits = null,
+          attachment_traits_ref = null, attachment_to_beneficiary = null
+  )
+  {
+    const ec = new TextEncoder()
+
+    const [ tseckey ] = Tap.getSecKey(seckey.buff);
+    const [ tpubkey ] = Tap.getPubKey(pubkey);
+
+    const address = Address.p2tr.encode(tpubkey, network)
+    const toAddress = Address.p2tr.decode(RECEIVER, network).hex;
+    let toBeneficiaryAddress = null;
+
+    document.getElementById('tx').onchange = function(){
+      if(this.value.trim() !== '')
+      {
+        document.getElementById('create_tx').disabled = false;
+      }
+      else
+      {
+        document.getElementById('create_tx').disabled = true;
+      }
+    };
+
+    if(attachment)
+    {
+
+      let _attachment_key = null;
+      let _attachment_data = null;
+
+      if(attachment_data !== null && attachment_mime !== null)
+      {
+        _attachment_key = 'I';
+        _attachment_data = attachment_data;
+      }
+      else if(attachment_file_ref !== null)
+      {
+        _attachment_key = 'R';
+        _attachment_data = textToHex(attachment_file_ref);
+        attachment_mime = '';
+      }
+      else
+      {
+        throw new Error('No content given.');
+      }
+
+      if(attachment_number === null || attachment_number_max === null ||
+              isNaN(parseInt(attachment_number)) || isNaN(parseInt(attachment_number_max)) ||
+                  attachment_number > attachment_number_max
+      )
+      {
+        throw new Error('Invalid collection numbers.');
+      }
+
+
+      let to_beneficiary_output = 0;
+
+      if(attachment_to_beneficiary !== null)
+      {
+        toBeneficiaryAddress = Address.p2tr.decode(attachment_to_beneficiary, network).hex;
+        to_beneficiary_output = 3;
+      }
+
+      let script = [
+        pubkey,
+        'OP_CHECKSIG',
+        'OP_0',
+        'OP_IF',
+        ec.encode('P'),
+        ec.encode('A'),
+        ec.encode(_attachment_key),
+        ec.encode(attachment_mime),
+        _attachment_data,
+        ec.encode('N'),
+        toBytes(parseInt(attachment_number)),
+        toBytes(parseInt(attachment_number_max)),
+        ec.encode('B'),
+        toBytes(to_beneficiary_output)
+      ];
+
+      console.log(script);
+
+      const collection_address = Address.fromScriptPubKey(['OP_1', pubkey]);
+
+      if(attachment_traits !== null && attachment_traits.trim() !== '')
+      {
+        attachment_traits = attachment_traits.trim().split("\n");
+
+        script.push(ec.encode('T'));
+
+        for(let i = 0; i < attachment_traits.length; i++)
+        {
+          let splitted = attachment_traits[i].split(':');
+          if(splitted.length !== 2)
+          {
+            continue;
+          }
+          script.push(ec.encode(splitted[0].trim()));
+          script.push(ec.encode(splitted[1].trim()));
+        }
+      }
+      else if(attachment_traits_ref !== null)
+      {
+        script.push(ec.encode('TR'));
+        script.push(ec.encode(attachment_traits_ref));
+      }
+
+      script.push('01');
+      script.push('OP_ENDIF');
+
+      const leaf = await Tap.tree.getLeaf(Script.encode(script));
+      const [tapkey, cblock] = await Tap.getPubKey(pubkey, { target: leaf });
+
+      let tap_address = Address.p2tr.encode(tapkey, network);
+      document.getElementById('tx').style.display = 'inline';
+      document.getElementById('vout').style.display = 'inline';
+      document.getElementById('sendto').style.display = 'block';
+      document.getElementById('sendto').innerHTML = '';
+      document.getElementById('sendto').innerHTML = "Send exactly " + PVALUE + " sats to address: " + tap_address +
+             "<hr/>After sending the funds, copy and paste its tx id below. If the resulting TX HEX cannot be pushed on https://mempool.space/tx/push, try a different vout (0 or 1)" + "<hr/>Collection address: " + collection_address;
+      console.log('Send exactly ' + PVALUE + ' sats to address:', tap_address)
+
+      document.getElementById('create_tx').style.display = 'inline';
+      document.getElementById('create_tx').onclick = async function()
+      {
+
+        if(document.getElementById('tx').value.trim() === '')
+        {
+          alert('Please enter the TX hash for the funding transaction above first');
+          return;
+        }
+
+        let vout = [{
+            value: RVALUE,
+            scriptPubKey: [ 'OP_1', toAddress ]
+          },
+          {
+            scriptPubKey: [ 'OP_RETURN', ec.encode('P'), ec.encode('D'), toBytes(toInt26(SYMBOL)), toBytes(ID), toBytes(0), toBytes(DECIMALS), textToHex(''+MAX), textToHex(''+LIMIT) ]
+          }
+        ];
+
+        if(to_beneficiary_output !== 0)
+        {
+          vout.push({
+            value: RVALUE,
+            scriptPubKey: [ 'OP_1', toBeneficiaryAddress ]
+          });
+        }
+
+        const txdata = Tx.create({
+          vin  : [{
+            txid: document.getElementById('tx').value.trim(),
+            vout: document.getElementById('vout').value.trim() === '' ? 0 : parseInt(document.getElementById('vout').value.trim()),
+            prevout: {
+              value: PVALUE,
+              scriptPubKey: [ 'OP_1', tapkey ]
+            },
+          }],
+          vout : vout
+        });
+
+        const sig = await Signer.taproot.sign(seckey.raw, txdata, 0, {extension: leaf});
+        txdata.vin[0].witness = [ sig, script, cblock ];
+
+        await Signer.taproot.verify(txdata, 0, { pubkey : pubkey, throws : true });
+
+        document.getElementById('sendto').innerHTML += '<hr/>Your DEPLOY RAW TX'+Tx.encode(txdata).hex;
+        console.log('Your DEPLOY txhex:', Tx.encode(txdata).hex)
+
+        document.getElementById('create_tx').style.display = 'none';
+      }
+    }
+    else
+    {
+      document.getElementById('tx').style.display = 'inline';
+      document.getElementById('vout').style.display = 'inline';
+      document.getElementById('sendto').style.display = 'block';
+      document.getElementById('sendto').innerHTML = '';
+      document.getElementById('sendto').innerHTML = "Send exactly " + PVALUE + " sats to address: " + address +
+              "<hr/>After sending the funds, copy and paste its tx id below. If the resulting TX HEX cannot be pushed on https://mempool.space/tx/push, try a different vout (0 or 1)";
+      console.log('Send exactly ' + PVALUE + ' sats to address:', address)
+
+      document.getElementById('create_tx').style.display = 'inline';
+      document.getElementById('create_tx').onclick = async function()
+      {
+        if(document.getElementById('tx').value.trim() === '')
+        {
+          alert('Please enter the TX hash for the funding transaction above first');
+          return;
+        }
+
+        const txdata = Tx.create({
+          vin  : [{
+            txid: document.getElementById('tx').value.trim(),
+            vout: document.getElementById('vout').value.trim() === '' ? 0 : parseInt(document.getElementById('vout').value.trim()),
+            prevout: {
+              value: PVALUE,
+              scriptPubKey: [ 'OP_1', tpubkey ]
+            },
+          }],
+          vout : [{
+            value: RVALUE,
+            scriptPubKey: [ 'OP_1', toAddress ]
+          },
+            {
+              scriptPubKey: [ 'OP_RETURN', ec.encode('P'), ec.encode('D'), toBytes(toInt26(SYMBOL)), toBytes(ID), toBytes(0), toBytes(DECIMALS), textToHex(''+MAX), textToHex(''+LIMIT) ]
+            }
+          ]
+        });
+
+        const sig = Signer.taproot.sign(tseckey, txdata, 0);
+        txdata.vin[0].witness = [ sig ];
+        await Signer.taproot.verify(txdata, 0, { throws: true });
+
+        document.getElementById('create_tx').style.display = 'none';
+        document.getElementById('sendto').innerHTML += '<hr/>Your DEPLOY RAW TX'+Tx.encode(txdata).hex;
+        console.log('Your DEPLOY txhex:', Tx.encode(txdata).hex)
+      }
+    }
+  }
+
+  function bitLength(number) {
+    return Math.floor(Math.log2(number)) + 1;
+  }
+
+  function byteLength(number) {
+    return Math.ceil(bitLength(number) / 8);
+  }
+
+  function fromBytes(buffer) {
+    const bytes = new Uint8ClampedArray(buffer);
+    const size = bytes.byteLength;
+    let x = 0;
+    for (let i = 0; i < size; i++) {
+      const byte = bytes[i];
+      x *= 0x100;
+      x += byte;
+    }
+    return x;
+  }
+
+  function toBytes(number) {
+    if (!Number.isSafeInteger(number)) {
+      throw new Error("Number is out of range");
+    }
+
+    const size = number === 0 ? 0 : byteLength(number);
+    const bytes = new Uint8ClampedArray(size);
+    let x = number;
+    for (let i = (size - 1); i >= 0; i--) {
+      const rightByte = x & 0xff;
+      bytes[i] = rightByte;
+      x = Math.floor(x / 0x100);
+    }
+
+    return bytes.buffer;
+  }
+
+  async function mint(SYMBOL, ID, MINT, RECEIVER, RVALUE, TX, VOUT, PVALUE, network, seckey, pubkey)
+  {
+    const ec = new TextEncoder()
+
+    const [ tseckey ] = Tap.getSecKey(seckey.buff)
+    const [ tpubkey ] = Tap.getPubKey(pubkey)
+
+    const address = Address.p2tr.encode(tpubkey, network)
+    const toAddress = Address.p2tr.decode(RECEIVER, network).hex;
+
+    const txdata = Tx.create({
+      vin  : [{
+        txid: TX,
+        vout: VOUT,
+        prevout: {
+          value: PVALUE,
+          scriptPubKey: [ 'OP_1', tpubkey ]
+        },
+      }],
+      vout : [{
+        value: RVALUE,
+        scriptPubKey: [ 'OP_1', toAddress ]
+      },
+      {
+        scriptPubKey: [ 'OP_RETURN', ec.encode('P'), ec.encode('M'), toBytes(toInt26(SYMBOL)), toBytes(ID), toBytes(0), textToHex(''+MINT) ]
+      }
+      ]
+    })
+
+    const sig = Signer.taproot.sign(tseckey, txdata, 0)
+    txdata.vin[0].witness = [ sig ]
+
+    await Signer.taproot.verify(txdata, 0, { throws: true })
+
+    console.log('Send exactly ' + PVALUE + ' sats to address:', address)
+    console.log('Your MINT txhex:', Tx.encode(txdata).hex)
+
+  }
+
+  async function transfer(SYMBOL, ID, TRANSFER, RECEIVER, RVALUE, TX, VOUT, PVALUE, network, seckey, pubkey)
+  {
+    const ec = new TextEncoder()
+
+    const [ tseckey ] = Tap.getSecKey(seckey.buff)
+    const [ tpubkey ] = Tap.getPubKey(pubkey)
+
+    const address = Address.p2tr.encode(tpubkey, network)
+    const toAddress = Address.p2tr.decode(RECEIVER, network).hex;
+
+    const txdata = Tx.create({
+      vin  : [{
+        txid: TX,
+        vout: VOUT,
+        prevout: {
+          value: PVALUE,
+          scriptPubKey: [ 'OP_1', tpubkey ]
+        },
+      }],
+      vout : [{
+        value: RVALUE,
+        scriptPubKey: [ 'OP_1', toAddress ]
+      },
+        {
+          scriptPubKey: [ 'OP_RETURN', ec.encode('P'), ec.encode('T'), toBytes(toInt26(SYMBOL)), toBytes(ID), toBytes(0), textToHex(''+TRANSFER) ]
+        }
+      ]
+    })
+
+    const sig = Signer.taproot.sign(tseckey, txdata, 0)
+    txdata.vin[0].witness = [ sig ]
+
+    await Signer.taproot.verify(txdata, 0, { throws: true })
+
+    console.log('Send exactly ' + PVALUE + ' sats to address:', address)
+    console.log('Your TRANSFER txhex:', Tx.encode(txdata).hex)
+
+  }
+
+  function bytesToHex(bytes) {
+    return bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, "0"), "");
+  }
+
+  function textToHex(text) {
+    var encoder = new TextEncoder().encode(text);
+    return [...new Uint8Array(encoder)]
+            .map(x => x.toString(16).padStart(2, "0"))
+            .join("");
+  }
+
+  function hexToBytes(hex) {
+    return Uint8Array.from(hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
+  }
+
+  function toString26(num) {
+    var alpha = charRange('a', 'z');
+    var result = '';
+
+    // no letters for 0 or less
+    if (num < 1) {
+      return result;
+    }
+
+    var quotient = num,
+            remainder;
+
+    // until we have a 0 quotient
+    while (quotient !== 0) {
+      // compensate for 0 based array
+      var decremented = quotient - 1;
+
+      // divide by 26
+      quotient = Math.floor(decremented / 26);
+
+      // get remainder
+      remainder = decremented % 26;
+
+      // prepend the letter at index of remainder
+      result = alpha[remainder] + result;
+    }
+
+    return result;
+  }
+
+  function readFile(file) {
+    return new Promise((resolve, reject) => {
+      let reader = new FileReader()
+      reader.addEventListener("loadend", e => resolve(e.target.result))
+      reader.addEventListener("error", reject)
+      reader.readAsArrayBuffer(file)
+    })
+  }
+
+  async function getAsByteArray(file) {
+    return new Uint8Array(await readFile(file))
+  }
+
+  function toInt26(str) {
+    var alpha = charRange('a', 'z');
+    var result = 0;
+
+    // make sure we have a usable string
+    str = str.toLowerCase();
+    str = str.replace(/[^a-z]/g, '');
+
+    // we're incrementing j and decrementing i
+    var j = 0;
+    for (var i = str.length - 1; i > -1; i--) {
+      // get letters in reverse
+      var char = str[i];
+
+      // get index in alpha and compensate for
+      // 0 based array
+      var position = alpha.indexOf(char);
+      position++;
+
+      // the power kinda like the 10's or 100's
+      // etc... position of the letter
+      // when j is 0 it's 1s
+      // when j is 1 it's 10s
+      // etc...
+      var power = Math.pow(26, j);
+
+      // add the power and index to result
+      result += power * position;
+      j++;
+    }
+
+    return result;
+  }
+
+  function charRange(start, stop) {
+    var result = [];
+
+    // get all chars from starting char
+    // to ending char
+    var i = start.charCodeAt(0),
+            last = stop.charCodeAt(0) + 1;
+    for (i; i < last; i++) {
+      result.push(String.fromCharCode(i));
+    }
+
+    return result;
+  }
+
+  function encodeBase64(file) {
+    return new Promise(function (resolve, reject) {
+      let imgReader = new FileReader();
+      imgReader.onloadend = function () {
+        resolve(imgReader.result.toString());
+      }
+      imgReader.readAsDataURL(file);
+    });
+  }
+
+  function base64ToHex(str) {
+    const raw = atob(str);
+    let result = '';
+    for (let i = 0; i < raw.length; i++) {
+      const hex = raw.charCodeAt(i).toString(16);
+      result += (hex.length === 2 ? hex : '0' + hex);
+    }
+    return result.toLowerCase();
+  }
+
+  // Testing parsability by decoding a raw transaction
+  //const res = Tx.decode('02000000000101715c4ac21fb8d2b3ee11ca7c7b769c0d1e98a0c5717eea3bfc5fb1d3f5515ea10100000000fffffffd0222020000000000002251204f6622c317c50e3bf7937ca77583a7173e1423b90887d48ca4cffd2f5306d38f0000000000000000106a0150014403615ec45200000131013103407d2c6562b3b02bd189a3cf49395eaca3aec274f68f9854f307ae84a143203f51116416ce04d2d2b91fa2ec25f23350569adb384367ccfc5b5a933453cd9baee4eb202272e4dd0d981736b6add54bd3518b3ff621c853ff162cfc6a4ae19c54572b08ac0063015001410152004c6b68747470733a2f2fc3a4c3b6c3bcc39f6f7264696e616c732e636f6d2f636f6e74656e742f323762343930383265323238376162623237343463663666306432653630623436633065353437346662346238316630356433313736376337306264303963626930f09f988a014e51020457025452486f72643a2f2f3237623439303832653232383761626232373434636636663064326536306234366330653534373466623462383166303564333137363763373062643039636269306821c12272e4dd0d981736b6add54bd3518b3ff621c853ff162cfc6a4ae19c54572b0800000000');
+  // should return a stack that can be used for indexing
+  //console.log(Script.decode(res.vout[1].scriptPubKey, false));
+
+  //const res = Tx.decode('0200000000010193e9ad1d9542493803e8efca53df552e58537192b97091716650bc0a1d1f30ff0000000000fffffffd0322020000000000002251202a21dccfa185606cddd9bc159b7d54d67224e9150962a861cbb591cbf8fcf3520000000000000000116a0150014403054ca501de0000013101312202000000000000225120610b4a5fd0e33e3984756b80aab94d6b25c35b1ae6d792951d9297f7854233dc0340254f054ed65ae9f1b5ede49ba017521226ac6ce63494ca9275822c83248328cc40f06741d9f490819c95688f06f85cde11fab89bb19b6b1ec3e9fb1121b37c33fdba2b207d9230f3ae76e0e6a773cab5983384a4b0b0fac92084517b8a956db9cc4cbebbac006301500141014909696d6167652f706e674d080289504e470d0a1a0a0000000d4948445200000191000001910806000000a4218e57000000097048597300000b1200000b1201d2dd7efc0000200049444154789c627c2ad3e9c0c0c0b09f61148c8251300a46c128200530303000000000ffff621a0db051300a46c1281805640106060600000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1284d08021805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a360149007181818000000004d0802ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014904d08020718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad44464d0802c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff62190d3afa02de226b06760bb991e4e551300a063d7813b67c3492c8010c0c0c00000000ffff1aad44e80cfe7dfcc9c066293ba2fc3c0a46c12818a680818101000000ffff1a1dcea233f8b1f3f688f2ef281805a360180306060600000000ffff1aad44e80cfe3ef9c84d0802f0fbeaab11e5e751300a46c130050c0c0c00000000ffff1aad440600fcd835da1b1905a360140c03c0c0c000000000ffff1aad4406008c0e698d8251300a860560606000000000ffff1aad4406008086b340c35aa360148c825130a401030303000000ffff1aad440608fc3cfe7844fa7b148c8251308c00030303000000ffff1aad4406088c0e698d8251300a863c60606000000000ffff1aad4406088c5622a360148c82210f18181800000000ffff1aad4406108c5624a360148c82210d18181800000000ffff1aad4406108c5622a360148c82210d18181800000000ffff1aad4406108c5622a360148c82210d18181800000000ffff1aad440610fcfbf47374f7fa281805a360e80206060600000000ffff1aad4406187c5b7d6544fb7f148c8251308401030303000000ffff1aad440618fc3af16844fb7f148c8251308401030303000000ffff1aad4406188cee5e1f05a360140c59c0c0c000000000ffff1aad440601189d601f05a360140c49c0c0c000000000ffff1aad440601183d0265148c8251302401030303000000ffff1aad44060100f544402bb546c1281805a360480106060600000000ffff1aad440609f8757c74827d148c825130c400030303000000ffff1aad440609189d171905a360140c39c0c0c000000000ffff1aad44060918ad4446c1281805430e30303000000000ffff1aad44060900cd89fc1a9d601f05a34d080260140c25c0c0c000000000ffff1aad440611f83eda1b1905a360140c25c0c0c000000000ffff1aad440611181dd21a05a360140c29c0c0c000000000ffff1aad44061100ed5c1fddbd3e0a46c128183280818101000000ffff1aad44061918ed8d8c8251300a860c60606000000000ffff1aad440619f8b1f3ce480f8251300a46c150010c0c0c00000000ffff1aad440619f879fcd1e8eef551300a46c1d0000c0c0c00000000ffff1aad440621181dd21a05a3803e6074693d8580818101000000ffff6219d2ae1fa60054897085ea8cf4601805a380ea0074f502e80e1f100d3af87474210b8580818101000000ffff1aad440621183d476b148c02ca01a8828055167faebd020f158f022a0306060600000000ffff1aad4406210075b141bd110e77d5911e14a3608803e4963f283dd3324d8386a57e5f7b09ae34462f7ba31360606000000000ffff1aad440629006584d14a64140c3500ab3440e9f717749108abb61883d09c400666197eaaf9065441c02a0b5825350a060030303000000000ffff1aad44062900f544f81b9c467a308c82410e40853928ad22571ac8803bd984e2740c32f30f6858eac423486fe3eacbd1158c830530303000000000ffff1aad440629808de7825a71a360140c1600eb01802a0c7c13d34c7cec0c027d5e64f5a6917b17bfafbd1aed650c66c0c0c000000000ffff1aad4406310065a4d14a64140c24204d0802b6d24006a40c5f4196d83e025716a05ec6e8e4f710030c0c0c00000000ffff1aad440631f8b6fa0a783860148c027a0158a10eae38c8986b20347c353af93dcc00030303000000ffff1aad44063100653250a6060d0d8c8251404b006ab07c9d7b86eca1236cc357c893dfa34b6c872960606000000000ffff1aad44063918dd78380a680d4015c887a26d64db021bbefafbf813c3e7fea390398dd1e37b460660606000000000ffff1aad44063918ad4446012d01a5150808fc7dfc91e1a5e5ccd1781a8980818101000000ffff1a3d3b6b9083d173b44601ad00352a1006e83cca2818a180818101000000ffff1aad44860018ad484601b501b52a905130c201030303000000ffff1aad44860018ad44061ec08ea2018df9bf0d5b012e84872a004da08f5620a3802a80818101000000ffff1a9d131902e0e7e851d57407b88ed500ad42e26b701eb2f354a0ca63285780a360900106060600000000ffff1aad44860018ddbd4e7b807ce613aefd0ba00a447855e4908d87d10a6414501d30303000000000ffff1aad448608f8b1ebf66825424500de1d0d3d8b8998fd0ba315c82818055800030303000000ffff1aad448608008dc7f3165a8ff460200b20df2b41ce2e6cd0f11da07d10a315c82818056880818101000000ffff1aad448608800db150f338ede11c56d4babd0e5471807a2043f5d480d10a6414d01430303000000000ffff1a4d0802ad4486100015885ca1a395083a800d4d517ba7f46805320a460101c0c0c000000000ffff1aad44861018ddbd8e7a40202dcf6362b79463109c13385a818c8251800f30303000000000ffff1aad44861000552223ed4046e4a3c8e975b704a8a2061d263854c16805320ae80618181800000000ffff1aad4486180015a6c3f9da5ce4a3c207e210bfd10a64148c021200030303000000ffff1aad44861800f546864b25827eede9401f154e8dab5c07128c5620a380ee80818101000000ffff1aad44861818ca47a0e0da053e1800a8f73194e79b462b9051302080818101000000ffff1aad44861800b5de87caee756276810f0630942b10507af8d4b077b4021905030318181800000000ffff1aad448620001518fcda836fd8057917f8efab2f07fd11e143fd1c2c50f8be0d5b3ea87a74a360840106060600000000ffff1aad44862000b5ee071a507a17f74083a17e8cc96805320a060560606000000000ffff1aad4486201888ddeb203b414b6c6115c7601d9a22068c5620a36014500930303000000000ffff1aad448628004db0835613d10ad06a17f8400350c521d0eb355a818c8251400dc0c0c000000000ffff1aad448628f8b1f30ed52a11d8d014a4a731f04b6d690586fa3126a315c828187480818101000000ffff1aad448628f809ed1d9053200ec42ef08106a315c828180534000c0c0c00000000ffff1aad44863020f62c2d4d0802e4a5b6c369688a5800da9c095ac63b5a818c82514065c0c0c000000000ffff1aad448630005508e895c860db053ed060a81f63325a818c82410d18181800000000ffff1aad44863000f54428bd70693883d10a64148c021a0306060600000000ffff1aad4486300015322f2d678ef460c00a788bac87f44d90a315c828181280818101000000ffff1aad4446c1b00343fd1cacd10a64140c19c0c0c000000000ffff621a8dad51309cc050af4040c393a315c828183280818101000000ffff1aed898c826101402baf4015c8503e261f5471802a9091b67a6e140c61c0c0c000000000ffff1aad4446c1900743fd181386d10a64140c55c0c0c000000000ffff1a1dce1a05431a8c5620a360140c2060606000000000ffff1aed898c82210b401587d09c40ba1e44496d305a818c82210d18181800000000ffff1aad4446c1900443fd181386d10a64140c07c0c0c000000000ffff1a1dce1a05430e8c5620a360140c12c0c0c000000000ffff1aad4446c19002a0e5bba315c8281805830430303000000000ffff1a1dce1a0543060cf5634c18462b905130dc00030303000000ffff1aed898c822101462b9051300a062160606000000000ffff1aed898c82410ff81b9c687a8b233dc06805320a862560606000000000ffff1aad4446c1a00643fd181386d10a64140c67c0c0c000000000ffff1a1dce1a0583160c870a0474a7cb6805320a864d08022d60606000000000ffff1aed898c824107402baf84e60431b059ca0ee9c8f9b6fa0ac387a26d83c025a36014d00830303000000000ffff1aad4446c1a002c3e1181386d10a64148c14c0c0c000000000ffff1a1dce1a0583068c5620a360140c31c0c0c000000000ffff1aed898c82410186c339580ca315c828186980818101000000ffff1aad4446c18083e1708c09c36805320a462260606000000000ffff1a1dce1a05030a462b9051300a863060606000000000ffff1aed898c820103c361173ac36805320a463260606000000000ffff1aed898c820101a315c8281805c30030303000000000ffff1aad4446c18000de22eb211ff0a315c82818f180818101000000ffff1aad444601dd016805d6e82aac51300a860160606000000000ffff1aad444601dd01fbe84ef451300a860760606000000000ffff1aad444601dd0187bbea900df4af73cf8c5620a36014c000030303000000ffff1a5d9d350ae80ed82ce58664a0832a0f502f64148c825100050c0c0c00000000ffff1aed898c02ba02d0be90a1ba27e4e7f1c783c015a360140c22c0c0c000000000ffff1aad4446015dc1501eca1aea677a8d82514075c0c0c000000000ffff1aad4446015d01bbc5d01cca6218ad4446c128c0040c0c0c00000000ffff1aad444601dd0068186b28df1132942bc051300a680218181800000000ffff1aad444601ddc0509d50870196d19ec84d0802281805a880818101000000ffff1aad444601ddc050df1f02ea490df54d92a36014501530303000000000ffff1aad444601ddc0509e548781d1799151300a9000030303000000ffff1aad4446015dc07038ea8461b4121905a3001530303000000000ffff1aad4446015dc0501fca8281d1c9f551300a9000030303000000ffff1aad4446015dc0509f548781d1c9f551300a9000030303000000ffff1aad4446015dc070980f61189d5c1f05a3001530303000000000ffff1aad444601cdc1503eea041b189d171905a3000a18181800000000ffff1aad444601cd01db309b4718ad4446c128800206060600000000ffff1aad444601cd01e73019ca8281d1c9f551300aa080818101000000ffff1aad444601cdc1503eea041b189d5c1f05a3000a18181800000000ffff1aad4446014dc17099504706a393eba360144001030303000000ffff1aad4446014dc170d91f820e46e74546c12860606060606000000000ffff1aad4446014dc1709b548781d14a64148c0206060606060600000000ffff1aad444601cd0068c867b816b6a393eba3601430303030303000000000ffff1aad444601cdc0701dca62189d5c1f05a3000218181800000000ffff1aad444601cdc07039ea041b189d5c1f05a380818181818101000000ffff1aad444601cdc0705c99850c46e74546c188070c0c0c00000000ffff1aad4446014dc0703bea041b18ad44464d0802c188070c0c0c00000000ffff1aad4446014dc0705d95850c4627d747c188070c0c0c00000000ffff1aad4446014dc0703bea041b189d5c1f05231e30303000000000ffff1aad4446014dc0703bea041b189d5c1f05231e30303000000000ffff1aad444601d501fb305e95850e46e74546c188060c0c0c00000000ffff1aad444601d50187bbca8809d4d14a64148c68c0c0c000000000ffff1aad444601d5c14898548781d1c9f55130a201030303000000ffff1aad4446015501689e6024b5ce4727d747c188060c0c0c00000000ffff1aad44460155c170df60880e06fbe43a687e6a74f27f14d00c30303000000000ffff62190ddd51404d309c8f3ac105403dafbf4f3e0eb83b409505e8bc32907b58b5c4c12be4fe7dfac9f0ca72c680bb6d140c53c0c0c000000000ffff1aad44460155c1703e7411170015da3f76dea6ab9d9061434845019a9761c17142c0e7bea3e08a64148c029a0006060600000000ffff1aad444601d500a8301d894327a042fc33c351dada6129c7c0a225060e6350454d4c38ffbefa8ae1ebdc333475d72818e180818101000000ffff1aad444601d5c0485a95850ca83db98e6d588a1cf0a9711f55dd350a46010660606000000000ffff1aad444601d5c0481cca62409a5c27675e84d861295201a807f2f3f823ca3d370a46013ec0c0c000000000ffff1aad444601d5c0485b990502a08a0334ef406c05024d08021b9682f5346831fc079a0301b969148c029a0306060600000000ffff1aad44460155c0483aea8401a9f2f8b6fa0a4e3590e128c83c0668a88f5efb673e35ec1d9d4c1f05f4010c0c0c00000000ffff1aad44460155c04839ea045fe501aa48a93d2c452af875fc31de8a6d148c02aa0206060600000000ffff1aad44460155c0709f5447af3c401504684f0c78b59485dca039b5f87dd1b641e08a51306200030303000000ffff1aad444601c560381f7502ab3c7e1e7f0cf6237f83135d87a648019ffb899f9b1905a3802a80818101000000ffff1aad444601c560b8ee52070d0dfd79f29181b7c89a416090ef7f01551e5fe78cee09190574060c0c0c00000000ffff1aad444601c560b8aeca020d51b1310c8d65cb1f8ab68f4ea68f02fa0306060600000000ffff1a3d807114500c46eafe90c1024047ae8cee091905030218181800000000ffff1aad4446014500b4cf61f494d88103a0dec7c786d19de9a3608000030303000000ffff1aad4446014560246e301c4c80948d8ea36014501d30303000000000ffff1aad444601456074286be0c0e8018ba360c001030303000000ffff1aad444601456024de1f3258c0e8018ba360c001030303000000ffff1aad444601d900b4437b2076658f82d1031647c120010c0c0c00000000ffff1aad444601d960b0ecd21e6960f480c551306800030303000000ffff1aad444601d980c36d74524d08027d20c0e8018ba360d00006060600000000ffff1aad4446015960381f753298c1e8018ba360500106060600000000ffff1aad444601596074427d60c0c7c6bd23d1dba360b00206060600000000ffff1aad4446015960747f08fd01e88045d0b2de51300a060d60606000000000ffff1aad4446015960747f087dc1e8018ba360500206060600000000ffff1aad444601c960f4a813fa03d0d126a393e9a360d00106060600000000ffff1aad444601c960b417425f003a60118447c128187480818101000000ffff1aad444601c960743e847e60f480c55130a801030303000000ffff1aad444601c960746516fd006867fae8018ba360d00206060600000000ffff1aad4446014900b43764f4a813fa00d04aacd19de9a360500306060600000000ffff1aad444601496074288b7e60f480c55130e801030303000000ffff1aad4446014980dd6274288b1e00b42b7df480c55130e801030303000000ffff1aad444601d100348c357ae822ed0168321d743ed6281805831e30303000000000ffff1aad444601d16074429d3e60f480c551306400030303000000ffff1aad444601d160747f08edc1e8018ba360480106060600000000ffff1aad444601d16074529df660f480c55130a400030303000000ffff1aad4446015160f4a813da83d1031647c190030c0c0c00000000ffff1aad444601516074288bb660f480c55130240103030300004d080200ffff1aad444601516074288bb660f480c551302401030303000000ffff1aad4446015160746516edc0e8018ba360c80206060600000000ffff1aad44460141307ad409edc0e8018ba360480306060600000000ffff1aad44460141c036ba4b9d6660f480c55130a401030303000000ffff1aad44460141c0393a1f421300aa3c460f581c05431a30303000000000ffff1aad44460141307ad4096dc087a2edc3d15ba360240106060600000000ffff1aad4446015e30ba2a8b3660f480c551302c00030303000000ffff1aad4446015e30ba3f84fa60f480c551306c00030303000000ffff1aad4446015e303aa94e7d009a0719dd13320a860560606000000000ffff1aad4446014e003ae604b4bc7714500f800e5804adc81a05a360580006060600000000ffff1aad4446014e303a94457d307ac0e228185680818101000000ffff1aad4446014e30ba4b9dba00d403193d6071140c2bc0c0c000000000ffff1aad4446014e30ba328b7a60744fc828189680818101000000ffff1aad44460156307ad40975c1e8018ba360580206060600000000ffff1aad4446015630ba2a8b7a0034993e7ac0e228189680818101000000ffff1aad44460156307ad4097500a8f7f10ef0ef8200000a7c49444154be68db70f0ca2818059880818101a0d14a64146005a3479d50078c1eb0380a863560606000000000ffff1aad44460106601f5d9545154d0802303a993e0a863d60606000000000ffff1aad44460106e07057190d142a80d1031647c1b0070c0c0c00000000ffff1aad44460106189d54a71c8c1eb0380a460460606000000000ffff1aad4446010a002deb1d3dea8432307ac0e228183180818101000000ffff1aad4446010a18dd604839183d6071148c18c0c0c000000000ffff1aad4446010a183dea8432003ad664f480c551306200030303000000ffff1aad4446010a183d749132f0a178744fc828184180818101000000ffff1aad4446011c80e64240c7bf8f02f2c0e8018ba360c40106060600000000ffff1aad4446011c8caeca221f80e64046f7848c82110718181800000000ffff1aad4446011c8c0e65910f3e146d1b9d4c1f05230f30303000000000ffff1aad4446011c8caecc220f8c1eb0380a462c60606000000000ffff1aad444601188c1e75423e183d6071148c58c0c0c000000000ffff1aad444601188c1e75421ef8dc7f74f480c551307201030303000000ffff1aad444601188c4eaa930e460f581c05231e30303000000000ffff1aad4446c1e851276482d1031647c188070c0c0c00000000ffff1aad4446c1e8843a190034913e7ac0e22818f180818101000000ffff1aad4446c1e851272402d052de0fa393e9a36014303030303000000000ffff1aad4446c1e8fe1012c1e8018ba360144001030303000000ffff1aad444638001d73327ad409f160f480c54d080251300a9000030303000000ffff1aad444638189d0f210d8c1eb0380a46011260606000000000ffff1aad444638181dca221e8c1eb0380a46011a60606000000000ffff1aad444638189d54270e8c1eb0380a460116c0c0c000000000ffff62190d97910b407b43fe8cb6ac89025fe69e199d4c1f05a3001d30303000000000ffff1aad444630000dcdbc095b3ed28361148c8251402e60606000000000ffff1a1dce1a05a360148c8251401e60606000000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a34d08026014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1a4d0802ad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718184d08021800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff1aad4446c1281805a36014900718181800000000ffff62616060b8c0c02ec0e0381a84a360148c8251300a48020c0c0c00000000ffff03001ed279ede4abc1e40000000049454e44ae426082014e510204570142530254524c5f68747470733a2f2f6f7264696e616c732e636f6d2f636f6e74656e742f32376234393038326532323837616262323734346366366630643265363062343663306535343734666234623831663035643331373637633730626430396362693001016821c07d9230f3ae76e0e6a773cab5983384a4b0b0fac92084517b8a956db9cc4cbebb00000000');
+  // should return a stack that can be used for indexing
+  //console.log(res);
+  //console.log(Script.decode(res.vin[0].witness[1], false));
+
+</script>
+
+</body>
+</html>
